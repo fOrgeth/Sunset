@@ -75,9 +75,9 @@ public class SunsetFragment extends Fragment {
             float sunYStart = Float.isNaN(mSunYCurrent) ? mSkyView.getHeight() : mSunYCurrent;
             float sunYEnd = mSunView.getTop();
 
-            long duration = Float.isNaN(mSunYCurrent) ? DURATION :
-                    (long) (DURATION / (mSkyView.getHeight() - mSunView.getTop())
-                            * (mSunYCurrent - mSunView.getTop()));
+            long duration = (Float.valueOf(mSunYCurrent).isNaN() ?
+                    DURATION : (long) (DURATION / (mSunView.getTop() - mSkyView.getHeight())
+                    * (mSunView.getTop() - mSunYCurrent)));
 
             int sunriseSkyColorStart = Float.isNaN(mSunYCurrent) ? mSunsetSkyColor : mCurrentSkyColor;
             int nightSkyColorStart = mCurrentNightSkyColor == 0 ? mNightSkyColor : mCurrentNightSkyColor;
@@ -93,10 +93,13 @@ public class SunsetFragment extends Fragment {
                 }
             });
 
+//            sunsetSkyAnimator = ObjectAnimator
+//                    .ofInt(mSkyView, "backgroundColor", sunriseSkyColorStart, mBlueSkyColor)
+//                    .setDuration(duration);
             sunsetSkyAnimator = ObjectAnimator
-                    .ofInt(mSkyView, "backgroundColor", sunriseSkyColorStart, mBlueSkyColor)
+                    .ofObject(mSkyView, "backgroundColor", new ArgbEvaluator(), sunriseSkyColorStart, mBlueSkyColor)
                     .setDuration(duration);
-            sunsetSkyAnimator.setEvaluator(new ArgbEvaluator());
+//            sunsetSkyAnimator.setEvaluator(new ArgbEvaluator());
             sunsetSkyAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
@@ -104,9 +107,12 @@ public class SunsetFragment extends Fragment {
                 }
             });
 
+            /*nightSkyAnimator = ObjectAnimator
+                    .ofObject(mSkyView, "backgroundColor", new ArgbEvaluator(), nightSkyColorStart, mSunsetSkyColor)
+                    .setDuration(mSunYCurrent == mSkyView.getHeight() ? DURATION / 2 : 0);*/
             nightSkyAnimator = ObjectAnimator
                     .ofInt(mSkyView, "backgroundColor", nightSkyColorStart, mSunsetSkyColor)
-                    .setDuration(duration / 2);
+                    .setDuration(mSunYCurrent == mSkyView.getHeight() ? DURATION / 2 : 0);
             nightSkyAnimator.setEvaluator(new ArgbEvaluator());
             nightSkyAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
@@ -167,7 +173,7 @@ public class SunsetFragment extends Fragment {
 
             nightSkyAnimator = ObjectAnimator
                     .ofInt(mSkyView, "backgroundColor", nightSkyColorStart, mNightSkyColor)
-                    .setDuration(duration / 2);
+                    .setDuration(DURATION/2);
             nightSkyAnimator.setEvaluator(new ArgbEvaluator());
             nightSkyAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
