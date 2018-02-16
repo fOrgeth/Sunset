@@ -8,9 +8,11 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 
@@ -19,9 +21,13 @@ public class SunsetFragment extends Fragment {
     private View mSceneView;
     private View mSunView;
     private View mSkyView;
+    private View mSunReflectionView;
     private int mBlueSkyColor;
     private int mSunsetSkyColor;
     private int mNightSkyColor;
+
+    ViewGroup.LayoutParams sunView;
+    ViewGroup.LayoutParams skyView;
 
     private boolean mSunset = true;
 
@@ -33,6 +39,7 @@ public class SunsetFragment extends Fragment {
 
     private AnimatorSet mSunriseAnimator;
     private AnimatorSet mSunsetAnimator;
+    private static final String TAG = "SunsetFragment";
 
     public static SunsetFragment newInstance() {
         return new SunsetFragment();
@@ -44,12 +51,26 @@ public class SunsetFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_sunset, container, false);
         mSceneView = view;
         mSunView = view.findViewById(R.id.sun);
+        mSunReflectionView = view.findViewById(R.id.sun_reflection);
         mSkyView = view.findViewById(R.id.sky);
         Resources resources = getResources();
         mBlueSkyColor = resources.getColor(R.color.blue_sky);
         mSunsetSkyColor = resources.getColor(R.color.sunset_sky);
         mNightSkyColor = resources.getColor(R.color.night_sky);
-
+        sunView = mSunView.getLayoutParams();
+        skyView = mSkyView.getLayoutParams();
+        Log.d(TAG, "skyView " + skyView.width);
+        Log.d(TAG, "SunReflection top: " + mSunReflectionView.getTop());
+        Log.d(TAG, "SunView bottom " + mSunView.getBottom());
+        Log.d(TAG, "SkyView height " + mSkyView.getHeight());
+        Log.d(TAG, "SkySun subtraction " + (mSkyView.getHeight() - mSunView.getBottom()));
+        mSunReflectionView.setTop(mSkyView.getHeight() + mSkyView.getHeight() - mSunView.getBottom());
+        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                Log.d(TAG, "onglobal... " + mSkyView.getHeight());
+            }
+        });
         mSceneView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -71,7 +92,7 @@ public class SunsetFragment extends Fragment {
             ObjectAnimator heightAnimator;
             ObjectAnimator sunsetSkyAnimator;
             ObjectAnimator nightSkyAnimator;
-
+            Log.d(TAG, "SunView sunrise getTop " + mSunView.getTop());
             float sunYStart = Float.isNaN(mSunYCurrent) ? mSkyView.getHeight() : mSunYCurrent;
             float sunYEnd = mSunView.getTop();
 
@@ -140,6 +161,8 @@ public class SunsetFragment extends Fragment {
             ObjectAnimator sunsetSkyAnimator;
             ObjectAnimator nightSkyAnimator;
 
+            Log.d(TAG, "sv " + sunView.height);
+
             float sunYStart = Float.isNaN(mSunYCurrent) ? mSunView.getTop() : mSunYCurrent;
             float sunYEnd = mSkyView.getHeight();
 
@@ -173,7 +196,7 @@ public class SunsetFragment extends Fragment {
 
             nightSkyAnimator = ObjectAnimator
                     .ofInt(mSkyView, "backgroundColor", nightSkyColorStart, mNightSkyColor)
-                    .setDuration(DURATION/2);
+                    .setDuration(DURATION / 2);
             nightSkyAnimator.setEvaluator(new ArgbEvaluator());
             nightSkyAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
