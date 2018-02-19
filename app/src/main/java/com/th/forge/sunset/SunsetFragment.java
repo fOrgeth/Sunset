@@ -15,6 +15,8 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 public class SunsetFragment extends Fragment {
 
@@ -33,9 +35,11 @@ public class SunsetFragment extends Fragment {
 
     private final long DURATION = 3000L;
     private float mSunYCurrent = Float.NaN;
+    private float mSunRefYCurrent = Float.NaN;
 
     private int mCurrentSkyColor;
     private int mCurrentNightSkyColor;
+    private int mSunToSeaDifference;
 
     private AnimatorSet mSunriseAnimator;
     private AnimatorSet mSunsetAnimator;
@@ -57,18 +61,22 @@ public class SunsetFragment extends Fragment {
         mBlueSkyColor = resources.getColor(R.color.blue_sky);
         mSunsetSkyColor = resources.getColor(R.color.sunset_sky);
         mNightSkyColor = resources.getColor(R.color.night_sky);
-        sunView = mSunView.getLayoutParams();
-        skyView = mSkyView.getLayoutParams();
-        Log.d(TAG, "skyView " + skyView.width);
-        Log.d(TAG, "SunReflection top: " + mSunReflectionView.getTop());
-        Log.d(TAG, "SunView bottom " + mSunView.getBottom());
-        Log.d(TAG, "SkyView height " + mSkyView.getHeight());
-        Log.d(TAG, "SkySun subtraction " + (mSkyView.getHeight() - mSunView.getBottom()));
         mSunReflectionView.setTop(mSkyView.getHeight() + mSkyView.getHeight() - mSunView.getBottom());
-        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        mSunView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                Log.d(TAG, "onglobal... " + mSkyView.getHeight());
+                Log.d(TAG, "onGlobalLayout");
+                Log.d(TAG, "mSkyView.GetHeight(): " + mSkyView.getHeight());
+                Log.d(TAG, "mSunView.getTop(): " + mSunView.getTop());
+                Log.d(TAG, "mSunView.getBottom(): " + mSunView.getBottom());
+                Log.d(TAG, "mSunView.getHeight(): " + mSunView.getHeight());
+                mSunToSeaDifference = mSkyView.getHeight() - mSunView.getBottom();
+                Log.d(TAG, "mSunDiff " + mSunToSeaDifference);
+                FrameLayout.LayoutParams lo = new FrameLayout.LayoutParams(200, 200);
+                lo.gravity = 17;
+                lo.topMargin = mSunToSeaDifference;
+                mSunReflectionView.setLayoutParams(lo);
+                mSunView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
             }
         });
         mSceneView.setOnClickListener(new View.OnClickListener() {
@@ -92,7 +100,6 @@ public class SunsetFragment extends Fragment {
             ObjectAnimator heightAnimator;
             ObjectAnimator sunsetSkyAnimator;
             ObjectAnimator nightSkyAnimator;
-            Log.d(TAG, "SunView sunrise getTop " + mSunView.getTop());
             float sunYStart = Float.isNaN(mSunYCurrent) ? mSkyView.getHeight() : mSunYCurrent;
             float sunYEnd = mSunView.getTop();
 
@@ -161,10 +168,11 @@ public class SunsetFragment extends Fragment {
             ObjectAnimator sunsetSkyAnimator;
             ObjectAnimator nightSkyAnimator;
 
-            Log.d(TAG, "sv " + sunView.height);
 
             float sunYStart = Float.isNaN(mSunYCurrent) ? mSunView.getTop() : mSunYCurrent;
             float sunYEnd = mSkyView.getHeight();
+
+//            float sunRefYStart = Float.isNaN(mSunRefYCurrent) ? mSunReflectionView.get
 
             long duration = Float.isNaN(mSunYCurrent) ? DURATION :
                     (long) (DURATION / (mSkyView.getHeight() - mSunView.getTop()) * (mSkyView.getHeight() - mSunYCurrent));
