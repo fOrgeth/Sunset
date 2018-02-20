@@ -16,7 +16,6 @@ import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 
 public class SunsetFragment extends Fragment {
 
@@ -28,18 +27,15 @@ public class SunsetFragment extends Fragment {
     private int mSunsetSkyColor;
     private int mNightSkyColor;
 
-    ViewGroup.LayoutParams sunView;
-    ViewGroup.LayoutParams skyView;
-
     private boolean mSunset = true;
 
     private final long DURATION = 3000L;
     private float mSunYCurrent = Float.NaN;
     private float mSunRefYCurrent = Float.NaN;
+    private int mSunToSeaDifference;
 
     private int mCurrentSkyColor;
     private int mCurrentNightSkyColor;
-    private int mSunToSeaDifference;
 
     private AnimatorSet mSunriseAnimator;
     private AnimatorSet mSunsetAnimator;
@@ -97,11 +93,11 @@ public class SunsetFragment extends Fragment {
 
     private void startSunrise(boolean isOn) {
         if (isOn) {
-            ObjectAnimator heightAnimator;
-            ObjectAnimator sunsetSkyAnimator;
-            ObjectAnimator nightSkyAnimator;
             float sunYStart = Float.isNaN(mSunYCurrent) ? mSkyView.getHeight() : mSunYCurrent;
             float sunYEnd = mSunView.getTop();
+
+            float sunYRefStart = Float.isNaN(mSunRefYCurrent) ? -mSunReflectionView.getHeight() : mSunRefYCurrent;
+            float sunYRefEnd = mSunReflectionView.getHeight();
 
             long duration = (Float.valueOf(mSunYCurrent).isNaN() ?
                     DURATION : (long) (DURATION / (mSunView.getTop() - mSkyView.getHeight())
@@ -110,7 +106,7 @@ public class SunsetFragment extends Fragment {
             int sunriseSkyColorStart = Float.isNaN(mSunYCurrent) ? mSunsetSkyColor : mCurrentSkyColor;
             int nightSkyColorStart = mCurrentNightSkyColor == 0 ? mNightSkyColor : mCurrentNightSkyColor;
 
-            heightAnimator = ObjectAnimator
+            ObjectAnimator heightAnimator = ObjectAnimator
                     .ofFloat(mSunView, "y", sunYStart, sunYEnd)
                     .setDuration(duration);
             heightAnimator.setInterpolator(new DecelerateInterpolator());
@@ -121,10 +117,21 @@ public class SunsetFragment extends Fragment {
                 }
             });
 
+            ObjectAnimator heightReflectionAnimator = ObjectAnimator
+                    .ofFloat(mSunReflectionView, "y", sunYRefStart, sunYRefEnd)
+                    .setDuration(duration);
+            heightReflectionAnimator.setInterpolator(new DecelerateInterpolator());
+            heightReflectionAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    mSunRefYCurrent = (float) animation.getAnimatedValue();
+                }
+            });
+
 //            sunsetSkyAnimator = ObjectAnimator
 //                    .ofInt(mSkyView, "backgroundColor", sunriseSkyColorStart, mBlueSkyColor)
 //                    .setDuration(duration);
-            sunsetSkyAnimator = ObjectAnimator
+            ObjectAnimator sunsetSkyAnimator = ObjectAnimator
                     .ofObject(mSkyView, "backgroundColor", new ArgbEvaluator(), sunriseSkyColorStart, mBlueSkyColor)
                     .setDuration(duration);
 //            sunsetSkyAnimator.setEvaluator(new ArgbEvaluator());
@@ -138,7 +145,7 @@ public class SunsetFragment extends Fragment {
             /*nightSkyAnimator = ObjectAnimator
                     .ofObject(mSkyView, "backgroundColor", new ArgbEvaluator(), nightSkyColorStart, mSunsetSkyColor)
                     .setDuration(mSunYCurrent == mSkyView.getHeight() ? DURATION / 2 : 0);*/
-            nightSkyAnimator = ObjectAnimator
+            ObjectAnimator nightSkyAnimator = ObjectAnimator
                     .ofInt(mSkyView, "backgroundColor", nightSkyColorStart, mSunsetSkyColor)
                     .setDuration(mSunYCurrent == mSkyView.getHeight() ? DURATION / 2 : 0);
             nightSkyAnimator.setEvaluator(new ArgbEvaluator());
@@ -152,6 +159,7 @@ public class SunsetFragment extends Fragment {
             mSunriseAnimator = new AnimatorSet();
             mSunriseAnimator.play(heightAnimator)
                     .with(sunsetSkyAnimator)
+                    .with(heightReflectionAnimator)
                     .after(nightSkyAnimator);
             mSunriseAnimator.start();
         } else {
@@ -164,15 +172,11 @@ public class SunsetFragment extends Fragment {
 
     private void startSunset(boolean isOn) {
         if (isOn) {
-            ObjectAnimator heightAnimator;
-            ObjectAnimator sunsetSkyAnimator;
-            ObjectAnimator nightSkyAnimator;
-
-
             float sunYStart = Float.isNaN(mSunYCurrent) ? mSunView.getTop() : mSunYCurrent;
             float sunYEnd = mSkyView.getHeight();
 
-//            float sunRefYStart = Float.isNaN(mSunRefYCurrent) ? mSunReflectionView.get
+            float sunRefYStart = Float.isNaN(mSunRefYCurrent) ? mSunReflectionView.getTop() : mSunRefYCurrent;
+            float sunRefYEnd = -mSunReflectionView.getHeight();
 
             long duration = Float.isNaN(mSunYCurrent) ? DURATION :
                     (long) (DURATION / (mSkyView.getHeight() - mSunView.getTop()) * (mSkyView.getHeight() - mSunYCurrent));
@@ -180,7 +184,7 @@ public class SunsetFragment extends Fragment {
             int sunsetSkyColorStart = mCurrentSkyColor == 0 ? mBlueSkyColor : mCurrentSkyColor;
             int nightSkyColorStart = mCurrentNightSkyColor == 0 ? mSunsetSkyColor : mCurrentNightSkyColor;
 
-            heightAnimator = ObjectAnimator
+            ObjectAnimator heightAnimator = ObjectAnimator
                     .ofFloat(mSunView, "y", sunYStart, sunYEnd)
                     .setDuration(duration);
             heightAnimator.setInterpolator(new AccelerateInterpolator());
@@ -191,7 +195,18 @@ public class SunsetFragment extends Fragment {
                 }
             });
 
-            sunsetSkyAnimator = ObjectAnimator
+            ObjectAnimator heightReflectionAnimator = ObjectAnimator
+                    .ofFloat(mSunReflectionView, "y", sunRefYStart, sunRefYEnd)
+                    .setDuration(duration);
+            heightReflectionAnimator.setInterpolator(new AccelerateInterpolator());
+            heightReflectionAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    mSunRefYCurrent = (float) animation.getAnimatedValue();
+                }
+            });
+
+            ObjectAnimator sunsetSkyAnimator = ObjectAnimator
                     .ofInt(mSkyView, "backgroundColor", sunsetSkyColorStart, mSunsetSkyColor)
                     .setDuration(duration);
             sunsetSkyAnimator.setEvaluator(new ArgbEvaluator());
@@ -202,7 +217,7 @@ public class SunsetFragment extends Fragment {
                 }
             });
 
-            nightSkyAnimator = ObjectAnimator
+            ObjectAnimator nightSkyAnimator = ObjectAnimator
                     .ofInt(mSkyView, "backgroundColor", nightSkyColorStart, mNightSkyColor)
                     .setDuration(DURATION / 2);
             nightSkyAnimator.setEvaluator(new ArgbEvaluator());
@@ -216,6 +231,7 @@ public class SunsetFragment extends Fragment {
             mSunsetAnimator = new AnimatorSet();
             mSunsetAnimator.play(heightAnimator)
                     .with(sunsetSkyAnimator)
+                    .with(heightReflectionAnimator)
                     .before(nightSkyAnimator);
             mSunsetAnimator.start();
         } else {
